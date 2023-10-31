@@ -62,25 +62,30 @@ func NewGameEngine(playAreaWidth, playAreaHeight uint) *GameEngine {
 		playAreaHeight: playAreaHeight,
 	}
 
-	gameEngine.init()
+	gameEngine.NewGame()
 
 	return gameEngine
 }
 
-func (ge *GameEngine) init() {
-	snakeBody := []Point{
-		Point{ge.playAreaWidth / 3, ge.playAreaHeight / 2},
-		Point{(ge.playAreaWidth / 3) - 1, ge.playAreaHeight / 2},
-	}
-
-	foodLocation := Point{snakeBody[0].X * 2, snakeBody[0].Y}
-
+// NewGame TODO
+func (ge *GameEngine) NewGame() {
 	ge.status = StatusNew
 	ge.score = 0
 	ge.speed = 1
+	ge.tickThrottleCount = 0
+
+	ge.foodLocation = Point{
+		(ge.playAreaWidth / 4) * 3,
+		ge.playAreaHeight / 2,
+	}
+
+	ge.snakeBody = []Point{
+		Point{ge.playAreaWidth / 4, ge.playAreaHeight / 2},
+		Point{(ge.playAreaWidth / 4) - 1, ge.playAreaHeight / 2},
+	}
 	ge.snakeDirection = DirectionRight
-	ge.snakeBody = snakeBody
-	ge.foodLocation = foodLocation
+	ge.snakeDirectionLastMoved = DirectionRight
+	ge.snakeShouldElongate = false
 }
 
 // Status TODO

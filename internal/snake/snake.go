@@ -5,10 +5,13 @@ import (
 	"image/color"
 	"strconv"
 
+	"golang.org/x/image/font"
+
 	"github.com/Rican7/gogames/gameengine/snake"
+	"github.com/hajimehoshi/bitmapfont/v3"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
@@ -75,9 +78,14 @@ func (fe *FrontEnd) Layout(outsideWidth, outsideHeight int) (screenWidth, screen
 func (fe *FrontEnd) Update() error {
 	gameStatus := fe.gameEngine.Status()
 
-	if gameStatus == snake.StatusNew || gameStatus == snake.StatusPlaying {
-		fe.handleInput()
+	switch gameStatus {
+	case snake.StatusNew, snake.StatusPlaying:
+		fe.handlePlayInput()
 		_ = fe.gameEngine.Tick()
+	case snake.StatusLost:
+		if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+			fe.gameEngine.NewGame()
+		}
 	}
 
 	return nil
@@ -90,7 +98,7 @@ func (fe *FrontEnd) Draw(screen *ebiten.Image) {
 	fe.drawPlayArea(screen)
 }
 
-func (fe *FrontEnd) handleInput() {
+func (fe *FrontEnd) handlePlayInput() {
 	switch {
 	case inpututil.IsKeyJustPressed(ebiten.KeyArrowUp):
 		fe.gameEngine.UpdateDirection(snake.DirectionUp)
@@ -104,6 +112,9 @@ func (fe *FrontEnd) handleInput() {
 }
 
 func (fe *FrontEnd) drawStatusArea(screen *ebiten.Image) {
+	statusAreaBoundsCenterX := fe.statusAreaBounds.Min.X + (fe.statusAreaBounds.Dx() / 2)
+	statusAreaBoundsCenterY := fe.statusAreaBounds.Min.Y + (fe.statusAreaBounds.Dy() / 2)
+
 	vector.StrokeLine(
 		screen,
 		float32(fe.statusAreaBounds.Min.X),
@@ -115,11 +126,29 @@ func (fe *FrontEnd) drawStatusArea(screen *ebiten.Image) {
 		false,
 	)
 
-	ebitenutil.DebugPrint(screen, strconv.Itoa(fe.gameEngine.Score()))
-	// text.Draw(screen, "test", arcadeFont, screenWidth-len(scoreStr)*fontSize, fontSize, colorWhite)
+	scoreStr := strconv.Itoa(fe.gameEngine.Score())
+	scoreBounds, _ := font.BoundString(bitmapfont.Face, scoreStr)
+
+	text.Draw(
+		screen,
+		scoreStr,
+		bitmapfont.Face,
+		statusAreaBoundsCenterX-(scoreBounds.Max.X.Floor()/2),
+		statusAreaBoundsCenterY+scoreBounds.Max.Y.Floor(),
+		colorWhite,
+	)
 }
 
 func (fe *FrontEnd) drawPlayArea(screen *ebiten.Image) {
+	switch fe.gameEngine.Status() {
+	case snake.StatusPlaying:
+		fe.drawRunningGame(screen)
+	case snake.StatusLost:
+		fe.drawGameOver(screen)
+	}
+}
+
+func (fe *FrontEnd) drawRunningGame(screen *ebiten.Image) {
 	foodLocation := fe.gameEngine.FoodLocation()
 	snakeBody := fe.gameEngine.SnakeBody()
 
@@ -154,4 +183,48 @@ func (fe *FrontEnd) drawPlayArea(screen *ebiten.Image) {
 			false,
 		)
 	}
+}
+
+func (fe *FrontEnd) drawGameOver(screen *ebiten.Image) {
+	playAreaBoundsCenterX := fe.playAreaBounds.Min.X + (fe.playAreaBounds.Dx() / 2)
+	playAreaBoundsCenterY := fe.playAreaBounds.Min.Y + (fe.playAreaBounds.Dy() / 2)
+	fontSize := bitmapfont.Face.Metrics().Height.Ceil()
+	gameOverStr := "Game Over"
+	playAgainStr := "Press Enter to play again"
+	gameOverBounds, _ := font.BoundString(bitmapfont.Face, gameOverStr)
+	playAgainBounds, _ := font.BoundString(bitmapfont.Face, playAgainStr)
+	messageHeight := fontSize * 3 // 3 Lines: 2 messages with a blank between
+
+	vector.DrawFilledRect(
+		screen,
+		float32(fe.playAreaBounds.Min.X),
+		float32(fe.playAreaBounds.Min.Y),
+		float32(fe.playAreaBounds.Dx()),
+		float32(fe.playAreaBounds.Dy()),
+		colorBlack,
+		false,
+	)
+
+	text.Draw(
+		screen,
+		gameOverStr,
+		bitmapfont.Face,
+		playAreaBoundsCenterX-(gameOverBounds.Max.X.Floor()/2),
+		playAreaBoundsCenterY- // Area center
+			(messageHeight/2)+ // Entire combined message height center,
+			gameOverBounds.Max.Y.Floor(),
+		colorWhite,
+	)
+
+	text.Draw(
+		screen,
+		playAgainStr,
+		bitmapfont.Face,
+		playAreaBoundsCenterX-(playAgainBounds.Max.X.Floor()/2),
+		playAreaBoundsCenterY- // Area center
+			(messageHeight/2)+ // Entire combined message height center
+			(fontSize*2)+ // Font height offset based on previous lines
+			playAgainBounds.Max.Y.Floor(),
+		colorWhite,
+	)
 }
