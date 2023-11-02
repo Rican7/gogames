@@ -1,3 +1,7 @@
+// Package snake provides a logical game-engine for a two-dimensional game in
+// the classic "snake" genre.
+//
+// See https://en.wikipedia.org/wiki/Snake_(video_game_genre)
 package snake
 
 import (

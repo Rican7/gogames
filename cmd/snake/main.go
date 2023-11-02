@@ -1,3 +1,4 @@
+// The classic "snake" game.
 package main
 
 import (

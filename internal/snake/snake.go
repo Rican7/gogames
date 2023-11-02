@@ -1,3 +1,5 @@
+// Package snake provides implementation-specific front-end details for the
+// the classic "snake" game.
 package snake
 
 import (
