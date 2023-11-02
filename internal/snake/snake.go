@@ -27,8 +27,8 @@ var (
 	colorBlue        = color.RGBA{0x0, 0x0, 0xff, 0xff}
 )
 
-// FrontEnd TODO
-type FrontEnd struct {
+// GUIFrontEnd is a Graphical User Interface Front End to the Snake game.
+type GUIFrontEnd struct {
 	gameEngine *snake.GameEngine
 
 	width  int
@@ -40,15 +40,16 @@ type FrontEnd struct {
 	playAreaGameHeightMultiplier uint
 }
 
-// NewFrontEnd TODO
-func NewFrontEnd(gameEngine *snake.GameEngine, width int, height int) *FrontEnd {
+// NewFrontEnd creates a new GUIFrontEnd with the given game engine and
+// un-scaled GUI dimensions.
+func NewFrontEnd(gameEngine *snake.GameEngine, width int, height int) *GUIFrontEnd {
 	statusAreaBounds := image.Rect(0, 0, width, 20)
 	playAreaBounds := image.Rect(0, statusAreaBounds.Max.Y, width, height)
 
 	playAreaGameWidthMultiplier := uint(playAreaBounds.Dx()) / gameEngine.PlayAreaWidth()
 	playAreaGameHeightMultiplier := uint(playAreaBounds.Dy()) / gameEngine.PlayAreaHeight()
 
-	return &FrontEnd{
+	return &GUIFrontEnd{
 		gameEngine: gameEngine,
 
 		width:  width,
@@ -61,21 +62,23 @@ func NewFrontEnd(gameEngine *snake.GameEngine, width int, height int) *FrontEnd 
 	}
 }
 
-// Run TODO
-func (fe *FrontEnd) Run() error {
+// Run runs the game's GUI Front End. It returns an error if any occurred.
+func (fe *GUIFrontEnd) Run() error {
 	ebiten.SetWindowSize(fe.width*2, fe.height*2)
 	ebiten.SetWindowTitle("Snake")
 
 	return ebiten.RunGame(fe)
 }
 
-// Layout TODO
-func (fe *FrontEnd) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
+// Layout takes the GUI window dimensions and returns the dimensions of the
+// GUI's logical layout.
+func (fe *GUIFrontEnd) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return fe.width, fe.height
 }
 
-// Update TODO
-func (fe *FrontEnd) Update() error {
+// Update performs logical updates for the game to function, returning any
+// errors caused.
+func (fe *GUIFrontEnd) Update() error {
 	gameStatus := fe.gameEngine.Status()
 
 	switch gameStatus {
@@ -91,14 +94,15 @@ func (fe *FrontEnd) Update() error {
 	return nil
 }
 
-// Draw TODO
-func (fe *FrontEnd) Draw(screen *ebiten.Image) {
+// Draw takes a screen and draws the GUI elements to the screen.
+func (fe *GUIFrontEnd) Draw(screen *ebiten.Image) {
 	screen.Fill(colorBlack)
 	fe.drawStatusArea(screen)
 	fe.drawPlayArea(screen)
 }
 
-func (fe *FrontEnd) handlePlayInput() {
+// handlePlayInput handles the input used during gameplay.
+func (fe *GUIFrontEnd) handlePlayInput() {
 	switch {
 	case inpututil.IsKeyJustPressed(ebiten.KeyArrowUp):
 		fe.gameEngine.UpdateDirection(snake.DirectionUp)
@@ -111,7 +115,8 @@ func (fe *FrontEnd) handlePlayInput() {
 	}
 }
 
-func (fe *FrontEnd) drawStatusArea(screen *ebiten.Image) {
+// drawStatusArea takes a screen and draws the status area to it.
+func (fe *GUIFrontEnd) drawStatusArea(screen *ebiten.Image) {
 	statusAreaBoundsCenterX := fe.statusAreaBounds.Min.X + (fe.statusAreaBounds.Dx() / 2)
 	statusAreaBoundsCenterY := fe.statusAreaBounds.Min.Y + (fe.statusAreaBounds.Dy() / 2)
 
@@ -139,7 +144,8 @@ func (fe *FrontEnd) drawStatusArea(screen *ebiten.Image) {
 	)
 }
 
-func (fe *FrontEnd) drawPlayArea(screen *ebiten.Image) {
+// drawPlayArea takes a screen and draws the play area to it.
+func (fe *GUIFrontEnd) drawPlayArea(screen *ebiten.Image) {
 	switch fe.gameEngine.Status() {
 	case snake.StatusNew:
 		fe.drawNewGame(screen)
@@ -150,7 +156,8 @@ func (fe *FrontEnd) drawPlayArea(screen *ebiten.Image) {
 	}
 }
 
-func (fe *FrontEnd) drawNewGame(screen *ebiten.Image) {
+// drawNewGame takes a screen and draws the new game screen graphics to it.
+func (fe *GUIFrontEnd) drawNewGame(screen *ebiten.Image) {
 	playAreaBoundsCenterX := fe.playAreaBounds.Min.X + (fe.playAreaBounds.Dx() / 2)
 	playAreaBoundsCenterY := fe.playAreaBounds.Min.Y + (fe.playAreaBounds.Dy() / 2)
 	fontSize := bitmapfont.Face.Metrics().Height.Ceil()
@@ -194,7 +201,8 @@ func (fe *FrontEnd) drawNewGame(screen *ebiten.Image) {
 	)
 }
 
-func (fe *FrontEnd) drawRunningGame(screen *ebiten.Image) {
+// drawRunningGame takes a screen and draws the running game graphics to it.
+func (fe *GUIFrontEnd) drawRunningGame(screen *ebiten.Image) {
 	foodLocation := fe.gameEngine.FoodLocation()
 	snakeBody := fe.gameEngine.SnakeBody()
 
@@ -231,7 +239,8 @@ func (fe *FrontEnd) drawRunningGame(screen *ebiten.Image) {
 	}
 }
 
-func (fe *FrontEnd) drawGameOver(screen *ebiten.Image) {
+// drawGameOver takes a screen and draws the game over screen graphics to it.
+func (fe *GUIFrontEnd) drawGameOver(screen *ebiten.Image) {
 	playAreaBoundsCenterX := fe.playAreaBounds.Min.X + (fe.playAreaBounds.Dx() / 2)
 	playAreaBoundsCenterY := fe.playAreaBounds.Min.Y + (fe.playAreaBounds.Dy() / 2)
 	fontSize := bitmapfont.Face.Metrics().Height.Ceil()
