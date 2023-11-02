@@ -134,14 +134,16 @@ func (ge *GameEngine) UpdateDirection(dir Direction) {
 	ge.snakeDirection = dir
 }
 
+// PlayNew TODO
+func (ge *GameEngine) PlayNew() {
+	ge.NewGame()
+	ge.status = StatusPlaying
+}
+
 // Tick TODO
 func (ge *GameEngine) Tick() Status {
-	if ge.status == StatusLost || !ge.tickThrottle() {
+	if ge.status != StatusPlaying || !ge.tickThrottle() {
 		return ge.status
-	}
-
-	if ge.status == StatusNew {
-		ge.status = StatusPlaying
 	}
 
 	validMove := ge.moveSnake()

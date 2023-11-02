@@ -79,13 +79,13 @@ func (fe *FrontEnd) Update() error {
 	gameStatus := fe.gameEngine.Status()
 
 	switch gameStatus {
-	case snake.StatusNew, snake.StatusPlaying:
-		fe.handlePlayInput()
-		_ = fe.gameEngine.Tick()
-	case snake.StatusLost:
+	case snake.StatusNew, snake.StatusLost:
 		if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
-			fe.gameEngine.NewGame()
+			fe.gameEngine.PlayNew()
 		}
+	case snake.StatusPlaying:
+		fe.handlePlayInput()
+		fe.gameEngine.Tick()
 	}
 
 	return nil
@@ -141,11 +141,57 @@ func (fe *FrontEnd) drawStatusArea(screen *ebiten.Image) {
 
 func (fe *FrontEnd) drawPlayArea(screen *ebiten.Image) {
 	switch fe.gameEngine.Status() {
+	case snake.StatusNew:
+		fe.drawNewGame(screen)
 	case snake.StatusPlaying:
 		fe.drawRunningGame(screen)
 	case snake.StatusLost:
 		fe.drawGameOver(screen)
 	}
+}
+
+func (fe *FrontEnd) drawNewGame(screen *ebiten.Image) {
+	playAreaBoundsCenterX := fe.playAreaBounds.Min.X + (fe.playAreaBounds.Dx() / 2)
+	playAreaBoundsCenterY := fe.playAreaBounds.Min.Y + (fe.playAreaBounds.Dy() / 2)
+	fontSize := bitmapfont.Face.Metrics().Height.Ceil()
+	newGameStr := "Snake"
+	playAgainStr := "Press Enter to play"
+	newGameBounds, _ := font.BoundString(bitmapfont.Face, newGameStr)
+	playAgainBounds, _ := font.BoundString(bitmapfont.Face, playAgainStr)
+	messageHeight := fontSize * 3 // 3 Lines: 2 messages with a blank between
+
+	vector.DrawFilledRect(
+		screen,
+		float32(fe.playAreaBounds.Min.X),
+		float32(fe.playAreaBounds.Min.Y),
+		float32(fe.playAreaBounds.Dx()),
+		float32(fe.playAreaBounds.Dy()),
+		colorBlack,
+		false,
+	)
+
+	text.Draw(
+		screen,
+		newGameStr,
+		bitmapfont.Face,
+		playAreaBoundsCenterX-(newGameBounds.Max.X.Floor()/2),
+		playAreaBoundsCenterY- // Area center
+			(messageHeight/2)+ // Entire combined message height center,
+			newGameBounds.Max.Y.Floor(),
+		colorWhite,
+	)
+
+	text.Draw(
+		screen,
+		playAgainStr,
+		bitmapfont.Face,
+		playAreaBoundsCenterX-(playAgainBounds.Max.X.Floor()/2),
+		playAreaBoundsCenterY- // Area center
+			(messageHeight/2)+ // Entire combined message height center
+			(fontSize*2)+ // Font height offset based on previous lines
+			playAgainBounds.Max.Y.Floor(),
+		colorWhite,
+	)
 }
 
 func (fe *FrontEnd) drawRunningGame(screen *ebiten.Image) {
